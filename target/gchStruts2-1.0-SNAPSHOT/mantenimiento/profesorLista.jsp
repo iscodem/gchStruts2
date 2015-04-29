@@ -26,5 +26,7 @@
             </s:iterator>
             </tr>
         </table>
+        
+        <s:a action="profesorDatos">Muestra datos</s:a>
     </body>
 </html>

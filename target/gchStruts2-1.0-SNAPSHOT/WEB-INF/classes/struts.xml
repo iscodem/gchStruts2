@@ -21,6 +21,11 @@
             <result>/mantenimiento/profesorLista.jsp</result>
                 
         </action>
+        
+        <action name="profesorDatos">
+            <result>/mantenimiento/profesorDatos.jsp</result>
+            
+        </action>
     </package>
  
 </struts>

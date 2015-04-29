@@ -2,6 +2,7 @@
 package pe.edu.cibertec.gchstruts2.action;
 
 import com.opensymphony.xwork2.ActionSupport;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +23,11 @@ public class ProfesorAction extends ActionSupport {
     
     public String execute() throws Exception{
         cargarProfes();
+        return SUCCESS;
+    }
+    
+    public String grabar(){
+        System.out.println(profesorActual);
         return SUCCESS;
     }
     

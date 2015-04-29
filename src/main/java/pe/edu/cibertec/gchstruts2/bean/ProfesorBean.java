@@ -9,6 +9,11 @@ public class ProfesorBean {
     Date fechaNac;
     boolean externo;
 
+    @Override
+    public String toString() {
+        return "ProfesorBean{" + "codigo=" + codigo + ", nombre=" + nombre + ", fechaNac=" + fechaNac + ", externo=" + externo + '}';
+    }
+
     public ProfesorBean(int codigo, String nombre, Date fechaNac, boolean externo) {
         this.codigo = codigo;
         this.nombre = nombre;
