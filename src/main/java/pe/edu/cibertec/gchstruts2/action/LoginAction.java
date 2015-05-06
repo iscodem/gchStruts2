@@ -11,16 +11,15 @@ public class LoginAction extends ActionSupport {
     public void validate() {
         if (usuarioBean.getUsuario().isEmpty())
         {
-            addFieldError("nomUser", "Nombre Usuario vacío");
+            addFieldError("nomUser", getText("usuario.vacio"));
         }
         if (usuarioBean.getClave().isEmpty())
         {
-            addFieldError("claUser", "Clave Usuario vacío");
+            addFieldError("claUser", getText("clave.vacio"));
         }
         if (usuarioBean.getClave().length()<4)
         {
-            addFieldError("claUser", "Clave debe ser de más "
-                    + "de 4 caracteres");
+            addFieldError("claUser", getText("clave.longitud"));
         }
     }
     
@@ -35,7 +34,7 @@ public class LoginAction extends ActionSupport {
         }
         else
         {
-            addActionError("Usuario/Clave no válido!");
+            addActionError(getText("usuario.valido"));
             return INPUT;
         }
     }

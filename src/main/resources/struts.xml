@@ -5,23 +5,31 @@
  
 <struts>
     <constant name="struts.devMode" value="true" />
+    <constant name="struts.custom.i18n.resources" 
+              value="globalmsn" />
  
     <package name="basicstruts2" extends="struts-default">
+        
+        <result-types>
+            <result-type name="tiles"
+             class="org.apache.struts2.views.tiles.TilesResult"/>
+        </result-types>
+
         <action name="index">
             <result>/index.jsp</result>
         </action>
         
         <action name="loginAction" 
                 class="pe.edu.cibertec.gchstruts2.action.LoginAction">
-            <result name="success">/bienvenida.jsp</result>
+            <result name="success" type="tiles">plantillaGCH</result>
             <result name="error">/error.jsp</result>
             <result name="input">/index.jsp</result>
         </action>
         
         <action name="profesorAction" 
                 class="pe.edu.cibertec.gchstruts2.action.ProfesorAction">
-            <result>/mantenimiento/profesorLista.jsp</result>
-            <result name="datos">/mantenimiento/profesorDatos.jsp</result>
+            <result type="tiles">profesorListaTiles</result>
+            <result name="datos" type="tiles">profesorDatosTiles</result>
         </action>
                 
     </package>

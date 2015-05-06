@@ -1,4 +1,4 @@
-pe\edu\cibertec\gchstruts2\action\LoginAction.class
-pe\edu\cibertec\gchstruts2\action\ProfesorAction.class
 pe\edu\cibertec\gchstruts2\bean\UsuarioBean.class
 pe\edu\cibertec\gchstruts2\bean\ProfesorBean.class
+pe\edu\cibertec\gchstruts2\action\LoginAction.class
+pe\edu\cibertec\gchstruts2\action\ProfesorAction.class

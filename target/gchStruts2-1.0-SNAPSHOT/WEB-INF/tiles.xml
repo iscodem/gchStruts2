@@ -1,0 +1,30 @@
+<!DOCTYPE tiles-definitions PUBLIC
+"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+
+    <definition template="/plantilla/plantilla.jsp"
+        name="plantillaGCH">
+        <put-attribute name="cabecera" 
+            value="/plantilla/cabecera.jsp" />
+        <put-attribute name="menu" 
+            value="/plantilla/menu.jsp" />
+        <put-attribute name="cuerpo" 
+            value="/bienvenida.jsp" />
+        <put-attribute name="pie" 
+            value="/plantilla/pie.jsp" />
+    </definition>
+    
+    <definition name="profesorListaTiles" 
+                extends="plantillaGCH">
+        <put-attribute name="cuerpo" 
+            value="/mantenimiento/profesorLista.jsp" />
+    </definition>
+    <definition name="profesorDatosTiles" 
+                extends="plantillaGCH">
+        <put-attribute name="cuerpo" 
+            value="/mantenimiento/profesorDatos.jsp" />
+    </definition>
+
+</tiles-definitions>

@@ -4,7 +4,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Login al Sistema</title>
+        <title><s:text name="sistema.titulo"/> </title>
         <s:head/>
         <style type="text/css">
             .label {
@@ -15,16 +15,25 @@
         </style>
     </head>
     <body>
-        <h1>Ingrese sus credenciales:</h1>
+        <h1><s:text name="login.credenciales"/></h1>
         <s:form action="loginAction">
-            <s:textfield label="Usuario" 
+            <s:textfield key="login.usuario" 
                          name="usuarioBean.usuario"/>
             <s:fielderror fieldName="nomUser" />
-            <s:password label="Clave"
+            <s:password key="login.clave"
                         name="usuarioBean.clave"/>
             <s:fielderror fieldName="claUser" />
-            <s:submit value="Ingresar"/>
+            <s:submit key="login.ingresar"/>
         </s:form>
         <s:actionerror />
+        
+        <s:url id="ingles" action="index">
+            <s:param name="request_locale">en</s:param>
+        </s:url>
+        <s:url id="espanol" action="index">
+            <s:param name="request_locale">es</s:param>
+        </s:url>
+        <s:a href="%{ingles}"><s:text name="idioma.ingles"/></s:a>&nbsp;
+        <s:a href="%{espanol}"><s:text name="idioma.espanol"/></s:a>
     </body>
 </html>
