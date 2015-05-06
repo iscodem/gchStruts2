@@ -4,7 +4,6 @@ public class UsuarioBean {
 
     private int codigo;
     private String nombre;
-    
     private String usuario;
     private String clave;
 
@@ -16,6 +15,22 @@ public class UsuarioBean {
         this.nombre = nombre;
         this.usuario = usuario;
         this.clave = clave;
+    }
+    
+    public int getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(int codigo) {
+        this.codigo = codigo;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
     public String getUsuario() {
@@ -32,22 +47,6 @@ public class UsuarioBean {
 
     public void setClave(String clave) {
         this.clave = clave;
-    }
-
-    public int getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(int codigo) {
-        this.codigo = codigo;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
     }
     
     

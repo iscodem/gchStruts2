@@ -7,26 +7,34 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <h1>Mantenimiento de profesores!</h1>
+        <h1>Mantenimiento de Profesores</h1>
         <table border="1" align="center" width="50%">
             <tr>
-                <th>Codigo</th>
+                <th>Código</th>
                 <th>Nombre</th>
-                <th>Fecha de Nacimiento</th>
-                <th>Externo</th>
+                <th>Fec.Nacimiento</th>
+                <th>Externo?</th>
                 <th>Acciones</th>
             </tr>
-            <tr>
             <s:iterator value="listaProfes">
+            <tr>
                 <td><s:property value="codigo" /></td>
                 <td><s:property value="nombre" /></td>
                 <td><s:property value="fechaNac" /></td>
                 <td><s:property value="externo" /></td>
-                <td>Mod - Eli</td>
-            </s:iterator>
+                <td>
+                    <s:url action="profesorAction"
+                           method="modificar"
+                           id="urlMod">
+                        <s:param name="profesorActual.codigo"
+                                 value="codigo">
+                        </s:param>
+                    </s:url>
+                    <s:a href="%{urlMod}">Mod</s:a>
+                    - Eli</td>
             </tr>
+            </s:iterator>
         </table>
-        
-        <s:a action="profesorDatos">Muestra datos</s:a>
+        <s:a action="profesorAction" method="insertar">Crear Profesor</s:a>
     </body>
 </html>

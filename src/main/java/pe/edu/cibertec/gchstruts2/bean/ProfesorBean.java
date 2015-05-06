@@ -1,17 +1,15 @@
-
 package pe.edu.cibertec.gchstruts2.bean;
 
 import java.util.Date;
 
 public class ProfesorBean {
-    int codigo;
-    String nombre;
-    Date fechaNac;
-    boolean externo;
 
-    @Override
-    public String toString() {
-        return "ProfesorBean{" + "codigo=" + codigo + ", nombre=" + nombre + ", fechaNac=" + fechaNac + ", externo=" + externo + '}';
+    private int codigo;
+    private String nombre;
+    private Date fechaNac;
+    private boolean externo;
+
+    public ProfesorBean() {
     }
 
     public ProfesorBean(int codigo, String nombre, Date fechaNac, boolean externo) {
@@ -21,7 +19,12 @@ public class ProfesorBean {
         this.externo = externo;
     }
 
-    public ProfesorBean() {
+    public boolean isExterno() {
+        return externo;
+    }
+
+    public void setExterno(boolean externo) {
+        this.externo = externo;
     }
 
     public int getCodigo() {
@@ -48,12 +51,9 @@ public class ProfesorBean {
         this.fechaNac = fechaNac;
     }
 
-    public boolean isExterno() {
-        return externo;
-    }
-
-    public void setExterno(boolean externo) {
-        this.externo = externo;
+    @Override
+    public String toString() {
+        return "ProfesorBean{" + "codigo=" + codigo + ", nombre=" + nombre + ", fechaNac=" + fechaNac + ", externo=" + externo + '}';
     }
     
 }

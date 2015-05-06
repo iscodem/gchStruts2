@@ -1,26 +1,30 @@
-<%-- 
-    Document   : index
-    Created on : 23/04/2015, 10:45:11 AM
-    Author     : Yaddif
---%>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ taglib prefix="s" uri="/struts-tags" %>
+<%@taglib uri="/struts-tags" prefix="s" %>
 <!DOCTYPE html>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Sistema de GCH en Struts2</title>
+        <title>Login al Sistema</title>
+        <s:head/>
+        <style type="text/css">
+            .label {
+                font-size: 12px;
+                color: blue;
+                font-family: arial;
+            }
+        </style>
     </head>
     <body>
-        <h1>Por favor ingrese sus credenciales</h1>
-        
+        <h1>Ingrese sus credenciales:</h1>
         <s:form action="loginAction">
-            <s:textfield label="Usuario" name="usuarioBean.usuario"/>
-            <s:fielderror fieldName="nomUser"/>
-            <s:password label="Clave" name="usuarioBean.clave"/>
-            <s:submit value="ingresar"/>
+            <s:textfield label="Usuario" 
+                         name="usuarioBean.usuario"/>
+            <s:fielderror fieldName="nomUser" />
+            <s:password label="Clave"
+                        name="usuarioBean.clave"/>
+            <s:fielderror fieldName="claUser" />
+            <s:submit value="Ingresar"/>
         </s:form>
-        <s:actionerror/>
+        <s:actionerror />
     </body>
 </html>

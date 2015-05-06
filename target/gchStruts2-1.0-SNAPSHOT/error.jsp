@@ -7,7 +7,9 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <h1>Hubo un error en el cpdigo...!</h1>
-    <s:a action="index">regresar</s:a>
+        <h1>Hubo un error en la aplicación. No nos llame!</h1>
+        <div style="align:center">
+            <s:a action="index">Regresar</s:a>
+        </div>
     </body>
 </html>

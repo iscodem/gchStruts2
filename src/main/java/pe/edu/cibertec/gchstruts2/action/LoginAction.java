@@ -3,31 +3,39 @@ package pe.edu.cibertec.gchstruts2.action;
 import com.opensymphony.xwork2.ActionSupport;
 import pe.edu.cibertec.gchstruts2.bean.UsuarioBean;
 
-/**
- *
- * @author Yaddif
- */
 public class LoginAction extends ActionSupport {
 
     private UsuarioBean usuarioBean;
 
     @Override
-    public void validate(){
-        if(usuarioBean.getUsuario().isEmpty()){
-            addFieldError("nomUser", "Nombre de usuario vacio...");
+    public void validate() {
+        if (usuarioBean.getUsuario().isEmpty())
+        {
+            addFieldError("nomUser", "Nombre Usuario vacío");
         }
-        if(usuarioBean.getClave().isEmpty()){
-            addFieldError("nomUser", "clave vacio...");
+        if (usuarioBean.getClave().isEmpty())
+        {
+            addFieldError("claUser", "Clave Usuario vacío");
+        }
+        if (usuarioBean.getClave().length()<4)
+        {
+            addFieldError("claUser", "Clave debe ser de más "
+                    + "de 4 caracteres");
         }
     }
     
-    @Override
+    
+    
     public String execute() throws Exception {
-        if(usuarioBean.getUsuario().equals("david")&&usuarioBean.getClave().equals("1234")){
-            usuarioBean.setNombre("David Porras");
-        return SUCCESS;
-        }else{
-            addActionError("usuario/clave son incorrectos...");
+        if (usuarioBean.getUsuario().equalsIgnoreCase("Yaddif")
+                && usuarioBean.getClave().equals("12345"))
+        {
+            usuarioBean.setNombre("Yaddif Medina");
+            return SUCCESS;
+        }
+        else
+        {
+            addActionError("Usuario/Clave no válido!");
             return INPUT;
         }
     }
