@@ -12,9 +12,29 @@
         
         <result-types>
             <result-type name="tiles"
-             class="org.apache.struts2.views.tiles.TilesResult"/>
+                         class="org.apache.struts2.views.tiles.TilesResult"/>
         </result-types>
-
+        
+        <interceptors>
+            <interceptor name="auditoria"
+                         class="pe.edu.cibertec.gchstruts2.interceptor.AuditoriaInterceptor">
+            </interceptor>
+            <interceptor-stack name="miStackInter">
+                <interceptor-ref name="auditoria" />
+                <interceptor-ref name="defaultStack" />
+            </interceptor-stack>
+        </interceptors>
+        
+        <default-interceptor-ref name="miStackInter" />
+        <global-results>
+            <result name="errorNulo">/error.jsp</result>
+        </global-results>
+        
+        <global-exception-mappings>
+            <exception-mapping name="nullPointer" exception="java.lang.NullPointerException"
+                               result="errorNulo" />
+               
+        </global-exception-mappings>
         <action name="index">
             <result>/index.jsp</result>
         </action>

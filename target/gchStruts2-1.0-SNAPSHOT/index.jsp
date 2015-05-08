@@ -23,7 +23,7 @@
             <s:password key="login.clave"
                         name="usuarioBean.clave"/>
             <s:fielderror fieldName="claUser" />
-            <s:submit key="login.ingresar"/>
+            <s:submit value="Ingresar"/>
         </s:form>
         <s:actionerror />
         
