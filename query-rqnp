@@ -1,0 +1,478 @@
+CREATE OR REPLACE PACKAGE BODY SIGA01.SER_CATALOGO IS
+--******************************************************************
+--Modificado por            : Victor Rivas
+--Fecha                     : 13/05/2015
+--Objetivo                  : Servicios del Requerimiento no Programado
+--Argumentos                :
+--N? Informe de definicion  : PAS201580000300006_F2_Servicios_RQNP.doc
+--N? de Pase                : PAS201580000300006
+--*****************************************************************
+
+PROCEDURE MENSAJERIA_INCORPORA( A_TIPO IN CHAR, A_SOLICITUD IN CHAR)
+AS
+codigo_mensaje         varchar2 (9)     := 'LOGCAT006';
+ll_numero_mensaje      number;
+ls_remitente           varchar2 (100);
+ls_remitente_firma     varchar2 (100);
+ls_remitente_email     varchar2 (100);
+ls_asunto              varchar2 (500);
+ls_cuerpo              varchar2 (32000);
+ls_nombre_destino      varchar2 (100);
+ls_email_destino       varchar2 (100);
+
+vs_tipo_proceso char(2) := '05';
+/*
+A_TIPO :
+ENVIAR_AUC      cuando el solicitante lo envia a la AUC
+APRUEBA_AUC     cuando la AUC aprueba
+RECHAZA_AUC     cuando la AUC rechaza
+*/
+
+vn_solicitud                            number;
+vs_registro                             maestro_personal.numero_registro_alterno%type;
+vs_descripcion                      solicitud_bien_catalogo.nomb_bien_cat%type;
+vs_fec_envio                        varchar2(20);
+vs_solicitante                      maestro_personal.nomb_cort_per%type;
+vs_auc                                  varchar2(100);
+vs_fec_aprueba_auc              varchar2(20);
+vs_aprobador_auc                maestro_personal.nomb_cort_per%type;
+vs_fec_rechazo                      varchar2(20);
+vs_rechazado                        maestro_personal.nomb_cort_per%type;
+vs_codigo                           maestro_personal.codi_empl_per%type;
+vs_motivo                           solicitud_bien_catalogo.come_bien_res%type;
+vs_correo_rechazado             varchar2(200);
+vs_correo_solicitante               varchar2(200);
+vs_correo_jefe_solicitante      varchar2(200);
+vs_correo_auc                       varchar2(200);
+vs_correo_dpg                       varchar2(200);
+vs_correo_aprueba_auc           varchar2(200);
+vs_correo_auc_d                 varchar2(1000);
+vs_correo_solicitante_d         varchar2(1000);
+vs_correo_dpg_d                 varchar2(1000);
+vs_depe_solicitante             varchar2(4);
+
+BEGIN
+
+    vn_solicitud := to_number(a_solicitud);
+
+    -- correo del solicitante
+    SELECT MAESTRO_PERSONAL.NUMERO_REGISTRO_ALTERNO, MAESTRO_PERSONAL.CODI_DEPE_TDE
+    INTO vs_registro, vs_depe_solicitante
+    FROM
+    SOLICITUD_BIEN_CATALOGO, MAESTRO_PERSONAL
+    WHERE
+    SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+    AND SOLICITUD_BIEN_CATALOGO.CODI_EMPL_PER = MAESTRO_PERSONAL.CODI_EMPL_PER;
+
+    SELECT trim(vwcorreos."smtp") into vs_correo_solicitante FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+    -- correo del solicitante encargados
+    SELECT CODI_EMPL_PER
+    INTO vs_codigo
+    FROM
+    SOLICITUD_BIEN_CATALOGO
+    WHERE
+    SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud;
+
+--    vs_correo_solicitante_d := fn_correos_destacados(vs_codigo);
+
+
+    -- correo jefe del solicitante
+    vs_depe_solicitante := SER_RNP.FN_GET_UUOO_NO_SUPERVISION(vs_depe_solicitante,4);
+
+    SELECT MAESTRO_PERSONAL.NUMERO_REGISTRO_ALTERNO
+    INTO vs_registro
+    FROM TDEPENDENCIAS, MAESTRO_PERSONAL
+    WHERE TDEPENDENCIAS.CODI_DEPE_TDE = vs_depe_solicitante
+    AND TDEPENDENCIAS.CODI_EMPL_PER = MAESTRO_PERSONAL.CODI_EMPL_PER;
+
+--    SELECT MJ.NUMERO_REGISTRO_ALTERNO
+--    INTO vs_registro
+--    FROM
+--    SOLICITUD_BIEN_CATALOGO, MAESTRO_PERSONAL, MAESTRO_PERSONAL MJ, TDEPENDENCIAS
+--    WHERE
+--    SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+--    AND SOLICITUD_BIEN_CATALOGO.CODI_EMPL_PER = MAESTRO_PERSONAL.CODI_EMPL_PER
+--    AND MAESTRO_PERSONAL.CODI_DEPE_TDE = TDEPENDENCIAS.CODI_DEPE_TDE
+--    AND TDEPENDENCIAS.CODI_EMPL_PER = MJ.CODI_EMPL_PER;
+
+    SELECT trim(vwcorreos."smtp") into vs_correo_jefe_solicitante FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+    -- correo supervisor DPG
+    select numero_registro_alterno into vs_registro from maestro_personal where codi_empl_per = (
+    SELECT TRIM (DESC_CORTA) FROM t01parametro WHERE trim(cod_parametro) = '4020' AND TRIM (desc_abreviatura) = 'SPP' AND cod_estado = '1');
+
+    SELECT trim(vwcorreos."smtp") into vs_correo_dpg FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+    -- correo supervisor DPG encargados
+    SELECT TRIM (DESC_CORTA) into vs_codigo FROM t01parametro WHERE trim(cod_parametro) = '4020' AND TRIM (desc_abreviatura) = 'SPP' AND cod_estado = '1';
+--    vs_correo_dpg_d := fn_correos_destacados(vs_codigo);
+
+
+    --- informacion de la Solicitud
+    SELECT
+    SOLICITUD_BIEN_CATALOGO.NOMB_BIEN_CAT,
+    TO_CHAR(SOLICITUD_BIEN_CATALOGO.FEC_ENVIO,'DD/MM/YYYY HH24:MI:SS') AS FEC_ENVIO,
+    MAESTRO_PERSONAL.NOMB_CORT_PER AS SOLICITANTE,
+    TDEPENDENCIAS.UNIDAD_ORGANIZACIONAL ||' '|| TDEPENDENCIAS.DESC_DEPE_TDE AS AUC,
+    TO_CHAR(SOLICITUD_BIEN_CATALOGO.fec_aprueba_auc,'DD/MM/YYYY HH24:MI:SS') AS fec_aprueba_auc,
+    MP2.NOMB_CORT_PER AS APROBADOR_AUC,
+    TO_CHAR(SOLICITUD_BIEN_CATALOGO.FECH_RESP_RES,'DD/MM/YYYY HH24:MI:SS') AS FEC_RECHAZO,
+    MP3.NOMB_CORT_PER AS RECHAZADO,
+    SOLICITUD_BIEN_CATALOGO.COME_BIEN_RES AS MOTIVO_RECHAZO
+    INTO
+    vs_descripcion,
+    vs_fec_envio,
+    vs_solicitante,
+    vs_auc,
+    vs_fec_aprueba_auc,
+    vs_aprobador_auc,
+    vs_fec_rechazo,
+    vs_rechazado,
+    vs_motivo
+    FROM
+    SOLICITUD_BIEN_CATALOGO,
+    MAESTRO_PERSONAL,
+    TDEPENDENCIAS,
+    MAESTRO_PERSONAL MP2,
+    MAESTRO_PERSONAL MP3
+    WHERE
+    SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+    AND SOLICITUD_BIEN_CATALOGO.CODI_EMPL_PER = MAESTRO_PERSONAL.CODI_EMPL_PER
+    AND SOLICITUD_BIEN_CATALOGO.COD_AUC = TDEPENDENCIAS.CODI_DEPE_TDE (+)
+    AND SOLICITUD_BIEN_CATALOGO.cod_responsable_auc = MP2.CODI_EMPL_PER (+)
+    AND SOLICITUD_BIEN_CATALOGO.CODI_EMPL_RES = MP3.CODI_EMPL_PER (+) ;
+
+    if a_tipo = 'ENVIAR_AUC' then
+        codigo_mensaje := 'LOGCAT006';
+        ls_asunto := 'Notificación a la AUC para la aprobación de la Solicitud de Incorporación al Catálogo N° ' || trim(a_solicitud);
+
+
+        -- correo del auc
+        SELECT NUMERO_REGISTRO_ALTERNO
+        INTO vs_registro
+        FROM
+        SOLICITUD_BIEN_CATALOGO,
+        MAESTRO_PERSONAL,
+        TDEPENDENCIAS
+        WHERE
+        SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+        AND SOLICITUD_BIEN_CATALOGO.COD_AUC = TDEPENDENCIAS.CODI_DEPE_TDE
+        AND TDEPENDENCIAS.CODI_EMPL_PER = MAESTRO_PERSONAL.CODI_EMPL_PER;
+
+        SELECT trim(vwcorreos."smtp") into vs_correo_auc FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+        --correos de los encargados auc
+        SELECT TDEPENDENCIAS.CODI_EMPL_PER
+        INTO vs_codigo
+        FROM
+        SOLICITUD_BIEN_CATALOGO,
+        TDEPENDENCIAS
+        WHERE
+        SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+        AND SOLICITUD_BIEN_CATALOGO.COD_AUC = TDEPENDENCIAS.CODI_DEPE_TDE;
+
+--        vs_correo_auc_d := fn_correos_destacados(vs_codigo);
+
+
+        ls_cuerpo :=
+        '<table class="form-table" align="center" cellpadding="2" cellspacing="1" width="95%">
+          <tbody>
+            <tr class="beta" >
+              <th align = "left" >N° Solicitud </th>
+              <th class="form-celda-3" align = "left" > '|| trim(a_solicitud) ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Solicitante </th>
+              <th class="form-celda-3" align = "left" > '|| vs_solicitante ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Ítem solicitado </th>
+              <th class="form-celda-3" align = "left" > '|| vs_descripcion ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >AUC a aprobar </th>
+              <th class="form-celda-3" align = "left" > '|| vs_auc ||'</th>
+            </tr>
+            <tr >
+              <th class="beta" align = "left" >Fecha de envío </th>
+              <th class="form-celda-3" align = "left" >'|| vs_fec_envio ||'</th>
+            </tr>
+          </tbody>
+        </table>' ;
+
+        ls_cuerpo := ls_cuerpo ||
+              '</tbody>
+          </table>';
+
+    end if;
+
+
+
+    if a_tipo = 'APRUEBA_AUC' then
+        codigo_mensaje := 'LOGCAT007';
+        ls_asunto := 'Notificación a la DPG para la aprobación de la Solicitud de Incorporación al Catálogo N° ' || trim(to_char(a_solicitud));
+
+        -- correo aprobador AUC
+        SELECT MAESTRO_PERSONAL.NUMERO_REGISTRO_ALTERNO
+        INTO vs_registro
+        FROM
+        SOLICITUD_BIEN_CATALOGO, MAESTRO_PERSONAL
+        WHERE
+        SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+        AND SOLICITUD_BIEN_CATALOGO.cod_responsable_auc = MAESTRO_PERSONAL.CODI_EMPL_PER ;
+
+        SELECT trim(vwcorreos."smtp") into vs_correo_aprueba_auc FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+        ls_cuerpo :=
+        '<table class="form-table" align="center" cellpadding="2" cellspacing="1" width="95%">
+          <tbody>
+            <tr class="beta" >
+              <th align = "left" >N° Solicitud </th>
+              <th class="form-celda-3" align = "left" > '|| trim(a_solicitud) ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Solicitante </th>
+              <th class="form-celda-3" align = "left" > '|| vs_solicitante ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Ítem solicitado </th>
+              <th class="form-celda-3" align = "left" > '|| vs_descripcion ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >AUC aprobadora </th>
+              <th class="form-celda-3" align = "left" > '|| vs_auc ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Aprobado por </th>
+              <th class="form-celda-3" align = "left" > '|| vs_aprobador_auc ||'</th>
+            </tr>
+            <tr >
+              <th class="beta" align = "left" >Fecha de aprobación </th>
+              <th class="form-celda-3" align = "left" >'|| vs_fec_aprueba_auc ||'</th>
+            </tr>
+          </tbody>
+        </table>' ;
+
+        ls_cuerpo := ls_cuerpo ||
+              '</tbody>
+          </table>';
+
+    end if;
+
+
+    if a_tipo = 'RECHAZA_AUC' then
+        codigo_mensaje := 'LOGCAT008';
+        ls_asunto := 'Notificación del rechazo de la AUC a la Solicitud de Incorporación al Catálogo N° ' || trim(a_solicitud);
+
+        -- correo rechazado por
+        SELECT MAESTRO_PERSONAL.NUMERO_REGISTRO_ALTERNO
+        INTO vs_registro
+        FROM
+        SOLICITUD_BIEN_CATALOGO, MAESTRO_PERSONAL
+        WHERE
+        SOLICITUD_BIEN_CATALOGO.CODI_BIEN_CAT = vn_solicitud
+        AND SOLICITUD_BIEN_CATALOGO.codi_empl_res = MAESTRO_PERSONAL.CODI_EMPL_PER ;
+
+        SELECT trim(vwcorreos."smtp") into vs_correo_rechazado FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+        ls_cuerpo :=
+        '<table class="form-table" align="center" cellpadding="2" cellspacing="1" width="95%">
+          <tbody>
+            <tr class="beta" >
+              <th align = "left" >N° Solicitud </th>
+              <th class="form-celda-3" align = "left" > '|| trim(a_solicitud) ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Solicitante </th>
+              <th class="form-celda-3" align = "left" > '|| vs_solicitante ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Ítem solicitado </th>
+              <th class="form-celda-3" align = "left" > '|| vs_descripcion ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >AUC que rechaza </th>
+              <th class="form-celda-3" align = "left" > '|| vs_auc ||'</th>
+            </tr>
+            <tr class="beta" >
+              <th align = "left" >Rechazado por </th>
+              <th class="form-celda-3" align = "left" > '|| vs_rechazado ||'</th>
+            </tr>
+            <tr >
+              <th class="beta" align = "left" >Fecha de rechazo </th>
+              <th class="form-celda-3" align = "left" >'|| vs_fec_rechazo ||'</th>
+            </tr>
+            <tr >
+              <th class="beta" align = "left" >Motivo de rechazo </th>
+              <th class="form-celda-3" align = "left" >'|| vs_motivo ||'</th>
+            </tr>
+          </tbody>
+        </table>' ;
+
+        ls_cuerpo := ls_cuerpo ||
+              '</tbody>
+          </table>';
+    end if;
+
+    -- Paso 1: Crear mensaje
+    sys_mensajeria.crearmensaje (codigo_mensaje, ls_remitente, ls_remitente_firma, ls_remitente_email, ls_asunto, ls_cuerpo, ll_numero_mensaje);
+
+    -- Paso 2: agregar Destinos (opcional se se desea adicionar destinos dinamicos)
+    --SYS_MENSAJERIA.adddestinoMail(ll_numero_mensaje,'chauca','mchaucaa@senasa.gob.pe','PARA');
+
+    if a_tipo = 'ENVIAR_AUC' then
+
+        if vs_correo_auc is not null then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_auc;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'PARA');
+        end if;
+
+        if vs_correo_auc_d is not null then
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, vs_correo_auc_d, 'PARA');
+        end if;
+
+
+        if vs_correo_solicitante is not null and vs_correo_solicitante <> vs_correo_auc then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_solicitante;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_jefe_solicitante is not null and vs_correo_jefe_solicitante <> vs_correo_solicitante and vs_correo_jefe_solicitante <> vs_correo_auc then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_jefe_solicitante;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_dpg is not null and vs_correo_dpg <> vs_correo_jefe_solicitante and vs_correo_dpg <> vs_correo_solicitante and vs_correo_dpg <> vs_correo_auc then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_dpg;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+    end if;
+
+    if a_tipo = 'APRUEBA_AUC' then
+        if vs_correo_dpg is not null then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_dpg;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'PARA');
+        end if;
+
+        if vs_correo_dpg_d is not null then
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, vs_correo_dpg_d, 'PARA');
+        end if;
+
+
+        if vs_correo_solicitante is not null and vs_correo_solicitante <> vs_correo_dpg then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_solicitante;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_jefe_solicitante is not null and vs_correo_jefe_solicitante <> vs_correo_solicitante and vs_correo_jefe_solicitante <> vs_correo_dpg then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_jefe_solicitante;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_auc is not null and vs_correo_auc <> vs_correo_jefe_solicitante and vs_correo_auc <> vs_correo_solicitante and vs_correo_auc <> vs_correo_dpg then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_auc;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_aprueba_auc is not null and vs_correo_aprueba_auc <> vs_correo_auc and vs_correo_aprueba_auc <> vs_correo_jefe_solicitante and vs_correo_aprueba_auc <> vs_correo_solicitante and vs_correo_aprueba_auc <> vs_correo_dpg then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_aprueba_auc;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+    end if;
+
+    if a_tipo = 'RECHAZA_AUC' then
+        if vs_correo_solicitante is not null then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_solicitante;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'PARA');
+        end if;
+
+        if vs_correo_solicitante_d is not null then
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, vs_correo_solicitante_d, 'PARA');
+        end if;
+
+        if vs_correo_jefe_solicitante is not null and vs_correo_jefe_solicitante <> vs_correo_solicitante then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_jefe_solicitante;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_auc is not null and vs_correo_auc <> vs_correo_jefe_solicitante and vs_correo_auc <> vs_correo_solicitante then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_auc;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_rechazado is not null and vs_correo_rechazado <> vs_correo_auc and vs_correo_rechazado <> vs_correo_jefe_solicitante and vs_correo_rechazado <> vs_correo_solicitante then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_rechazado;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+
+        if vs_correo_dpg is not null and vs_correo_dpg <> vs_correo_rechazado and vs_correo_dpg <> vs_correo_auc and vs_correo_dpg <> vs_correo_jefe_solicitante and vs_correo_dpg <> vs_correo_solicitante then
+            ls_nombre_destino := '';
+            ls_email_destino := vs_correo_dpg;
+            sys_mensajeria.adddestinomail (ll_numero_mensaje, ls_nombre_destino, ls_email_destino, 'CC');
+        end if;
+    end if;
+
+    -- Paso 3: agregar Archivos (opcional se se desea adicionar archivos)
+    /*
+    if FileExists(ls_nombre_archivo) then     // verifica si se existe el archivo
+      SYS_MENSAJERIA.addArchivo(ll_numero_mensaje,ls_nombre_archivo);
+    end if
+    */
+
+    -- Paso 4: Cambiar estado del mensaje para ser enviado
+    sys_mensajeria.sendmensaje (ll_numero_mensaje);
+    commit;
+END;
+
+FUNCTION FN_CORREOS_DESTACADOS (A_PERSONA IN VARCHAR2) RETURN VARCHAR2
+IS
+
+vs_lista varchar2(1000);
+vs_registro maestro_personal.numero_registro_alterno%type;
+vs_correo varchar2(200);
+
+cursor c_cur_persona is
+SELECT DISTINCT MAESTRO_PERSONAL.NUMERO_REGISTRO_ALTERNO
+FROM ENCARGOS_PERSONA,
+MAESTRO_PERSONAL
+WHERE
+ENCARGOS_PERSONA.CODI_EMPL_PER = a_persona
+AND ENCARGOS_PERSONA.FLAG_ENCA_ENC = 'S'
+AND ( TO_CHAR(SYSDATE,'YYYYMMDD')  BETWEEN TO_CHAR(ENCARGOS_PERSONA.FECH_INIC_ENC,'YYYYMMDD') AND TO_CHAR(ENCARGOS_PERSONA.FECH_FINA_ENC,'YYYYMMDD'))
+AND ENCARGOS_PERSONA.CODI_ENCA_ENC = MAESTRO_PERSONAL.CODI_EMPL_PER;
+
+
+BEGIN
+
+    for c_persona in c_cur_persona loop
+        vs_registro := c_persona.numero_registro_alterno;
+
+        SELECT trim(vwcorreos."smtp") into vs_correo FROM vwcorreos WHERE vwcorreos."cod_pers" = vs_registro;
+
+        if vs_lista is null then
+            vs_lista := vs_lista || vs_correo;
+        else
+            vs_lista := vs_lista || ';' || vs_correo;
+        end if;
+    end loop;
+
+    return vs_lista;
+END;
+
+
+END;
